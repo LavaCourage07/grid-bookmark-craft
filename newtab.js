@@ -16,6 +16,7 @@ class NewTabBookmarkManager {
         this.setupEventListeners();
         this.renderBookmarks();
         this.setupSearch();
+        this.addAnimationDelays();
     }
 
     initTheme() {
@@ -194,6 +195,12 @@ class NewTabBookmarkManager {
         localStorage.setItem('bookmarkTheme', this.currentTheme);
         document.body.setAttribute('data-theme', this.currentTheme);
         this.updateThemeIcon();
+        
+        // 添加主题切换动画
+        document.body.style.transition = 'all 0.5s ease';
+        setTimeout(() => {
+            document.body.style.transition = '';
+        }, 500);
     }
 
     toggleSidebar() {
@@ -208,6 +215,13 @@ class NewTabBookmarkManager {
         }
         
         this.updateSidebarToggleIcon();
+        
+        // 添加反馈动画
+        const toggleBtn = document.getElementById('sidebarToggle');
+        toggleBtn.style.transform = 'translateY(-50%) scale(0.8)';
+        setTimeout(() => {
+            toggleBtn.style.transform = '';
+        }, 150);
     }
 
     setView(view) {
@@ -221,6 +235,15 @@ class NewTabBookmarkManager {
         
         // 重新渲染书签
         this.renderBookmarks();
+        
+        // 添加视图切换动画
+        const container = document.getElementById('bookmarksContainer');
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+        }, 150);
     }
 
     renderGroupFilters() {
@@ -324,13 +347,32 @@ class NewTabBookmarkManager {
         container.className = this.currentView === 'grid' ? 'bookmarks-container' : 'bookmarks-container';
         
         if (this.currentView === 'grid') {
-            container.innerHTML = `<div class="bookmarks-grid">${bookmarks.map(bookmark => this.createBookmarkHTML(bookmark)).join('')}</div>`;
+            container.innerHTML = `<div class="bookmarks-grid">${bookmarks.map((bookmark, index) => this.createBookmarkHTML(bookmark, index)).join('')}</div>`;
         } else {
-            container.innerHTML = `<div class="bookmarks-list">${bookmarks.map(bookmark => this.createBookmarkListHTML(bookmark)).join('')}</div>`;
+            container.innerHTML = `<div class="bookmarks-list">${bookmarks.map((bookmark, index) => this.createBookmarkListHTML(bookmark, index)).join('')}</div>`;
         }
         
         // 绑定事件
         this.bindBookmarkEvents(container, bookmarks);
+        
+        // 添加动画延迟
+        this.addAnimationDelays();
+    }
+
+    addAnimationDelays() {
+        // 为书签卡片添加动画延迟
+        document.querySelectorAll('.bookmark-card').forEach((card, index) => {
+            card.style.setProperty('--card-index', index);
+        });
+        
+        document.querySelectorAll('.bookmark-list-item').forEach((item, index) => {
+            item.style.setProperty('--item-index', index);
+        });
+        
+        // 为表单字段添加动画延迟
+        document.querySelectorAll('.form-group').forEach((group, index) => {
+            group.style.setProperty('--field-index', index);
+        });
     }
 
     bindBookmarkEvents(container, bookmarks) {
@@ -341,7 +383,12 @@ class NewTabBookmarkManager {
             // 点击打开链接
             card.addEventListener('click', (e) => {
                 if (!e.target.closest('.bookmark-actions')) {
-                    window.open(bookmark.url, '_blank');
+                    // 添加点击动画
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        card.style.transform = '';
+                        window.open(bookmark.url, '_blank');
+                    }, 100);
                 }
             });
             
@@ -351,6 +398,12 @@ class NewTabBookmarkManager {
                 editBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.openEditModal(bookmark);
+                    
+                    // 添加按钮点击动画
+                    editBtn.style.transform = 'scale(0.8) rotate(180deg)';
+                    setTimeout(() => {
+                        editBtn.style.transform = '';
+                    }, 200);
                 });
             }
         });
@@ -363,12 +416,12 @@ class NewTabBookmarkManager {
         return this.bookmarks.filter(bookmark => bookmark.group === this.currentFilter);
     }
 
-    createBookmarkHTML(bookmark) {
+    createBookmarkHTML(bookmark, index = 0) {
         const domain = new URL(bookmark.url).hostname;
         const isCustom = !bookmark.isChrome;
         
         return `
-            <div class="bookmark-card" data-id="${bookmark.id}">
+            <div class="bookmark-card" data-id="${bookmark.id}" style="--card-index: ${index}">
                 <div class="bookmark-header">
                     <img class="bookmark-favicon" src="${bookmark.favicon}" alt="" onerror="this.style.display='none'">
                     <div class="bookmark-title">${bookmark.title}</div>
@@ -389,12 +442,12 @@ class NewTabBookmarkManager {
         `;
     }
 
-    createBookmarkListHTML(bookmark) {
+    createBookmarkListHTML(bookmark, index = 0) {
         const domain = new URL(bookmark.url).hostname;
         const isCustom = !bookmark.isChrome;
         
         return `
-            <div class="bookmark-list-item" data-id="${bookmark.id}">
+            <div class="bookmark-list-item" data-id="${bookmark.id}" style="--item-index: ${index}">
                 <img class="bookmark-favicon" src="${bookmark.favicon}" alt="" onerror="this.style.display='none'">
                 <div class="bookmark-list-content">
                     <div class="bookmark-title">${bookmark.title}</div>
@@ -448,12 +501,37 @@ class NewTabBookmarkManager {
         });
         
         // 显示模态框
-        document.getElementById('editModal').style.display = 'flex';
+        const modal = document.getElementById('editModal');
+        modal.style.display = 'flex';
+        
+        // 添加打开动画
+        const modalContent = modal.querySelector('.modal-content');
+        modalContent.style.transform = 'scale(0.8) translateY(20px)';
+        modalContent.style.opacity = '0';
+        
+        setTimeout(() => {
+            modalContent.style.transform = 'scale(1) translateY(0)';
+            modalContent.style.opacity = '1';
+        }, 10);
+        
+        // 重新添加动画延迟
+        setTimeout(() => {
+            this.addAnimationDelays();
+        }, 100);
     }
 
     closeEditModal() {
-        document.getElementById('editModal').style.display = 'none';
-        this.currentEditBookmark = null;
+        const modal = document.getElementById('editModal');
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // 添加关闭动画
+        modalContent.style.transform = 'scale(0.9) translateY(10px)';
+        modalContent.style.opacity = '0';
+        
+        setTimeout(() => {
+            modal.style.display = 'none';
+            this.currentEditBookmark = null;
+        }, 200);
     }
 
     async saveEdit() {
@@ -464,7 +542,19 @@ class NewTabBookmarkManager {
         const group = document.getElementById('editGroup').value;
         
         if (!title || !url) {
-            alert('请填写标题和网址');
+            // 添加错误动画
+            const titleInput = document.getElementById('editTitle');
+            const urlInput = document.getElementById('editUrl');
+            
+            if (!title) titleInput.classList.add('animate-shake');
+            if (!url) urlInput.classList.add('animate-shake');
+            
+            setTimeout(() => {
+                titleInput.classList.remove('animate-shake');
+                urlInput.classList.remove('animate-shake');
+            }, 500);
+            
+            this.showMessage('请填写标题和网址', 'error');
             return;
         }
         
@@ -506,23 +596,56 @@ class NewTabBookmarkManager {
 
     openAddGroupModal() {
         document.getElementById('newGroupName').value = '';
-        document.getElementById('addGroupModal').style.display = 'flex';
+        const modal = document.getElementById('addGroupModal');
+        modal.style.display = 'flex';
+        
+        // 添加打开动画
+        const modalContent = modal.querySelector('.modal-content');
+        modalContent.style.transform = 'scale(0.8) translateY(20px)';
+        modalContent.style.opacity = '0';
+        
+        setTimeout(() => {
+            modalContent.style.transform = 'scale(1) translateY(0)';
+            modalContent.style.opacity = '1';
+            document.getElementById('newGroupName').focus();
+        }, 10);
     }
 
     closeAddGroupModal() {
-        document.getElementById('addGroupModal').style.display = 'none';
+        const modal = document.getElementById('addGroupModal');
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // 添加关闭动画
+        modalContent.style.transform = 'scale(0.9) translateY(10px)';
+        modalContent.style.opacity = '0';
+        
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200);
     }
 
     async saveNewGroup() {
         const groupName = document.getElementById('newGroupName').value.trim();
         
         if (!groupName) {
-            alert('请输入分组名称');
+            const input = document.getElementById('newGroupName');
+            input.classList.add('animate-shake');
+            setTimeout(() => {
+                input.classList.remove('animate-shake');
+            }, 500);
+            
+            this.showMessage('请输入分组名称', 'error');
             return;
         }
         
         if (this.groups.includes(groupName)) {
-            alert('分组已存在');
+            const input = document.getElementById('newGroupName');
+            input.classList.add('animate-shake');
+            setTimeout(() => {
+                input.classList.remove('animate-shake');
+            }, 500);
+            
+            this.showMessage('分组已存在', 'error');
             return;
         }
         
@@ -541,7 +664,7 @@ class NewTabBookmarkManager {
 
     async deleteGroup(groupName) {
         if (groupName === '其他') {
-            alert('默认分组不能删除');
+            this.showMessage('默认分组不能删除', 'error');
             return;
         }
         
@@ -606,14 +729,15 @@ class NewTabBookmarkManager {
                 const title = link.textContent.trim();
                 
                 if (url && title && url.startsWith('http')) {
-                    newBookmarks.push({
+                    const newBookmark = {
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                         title,
                         url,
                         group: '其他',
                         createdAt: new Date().toISOString(),
                         favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`
-                    });
+                    };
+                    newBookmarks.push(newBookmark);
                 }
             });
 
@@ -658,14 +782,52 @@ class NewTabBookmarkManager {
             font-size: 14px;
             z-index: 1001;
             box-shadow: 0 4px 16px ${type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
-            animation: slideIn 0.3s ease;
+            animation: messageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(100%);
         `;
+        
+        // 添加消息动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes messageSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(100%) scale(0.8);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0) scale(1);
+                }
+            }
+            @keyframes messageSlideOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0) scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100%) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
         
         document.body.appendChild(messageDiv);
         
+        // 动画进入
         setTimeout(() => {
-            messageDiv.remove();
-        }, 3000);
+            messageDiv.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // 动画退出
+        setTimeout(() => {
+            messageDiv.style.animation = 'messageSlideOut 0.3s ease-in';
+            messageDiv.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                messageDiv.remove();
+                style.remove();
+            }, 300);
+        }, 2700);
     }
 }
 

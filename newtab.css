@@ -47,11 +47,35 @@ body {
     min-height: 100vh;
     color: var(--text-primary);
     overflow-x: hidden;
+    animation: pageLoad 0.8s ease-out;
+}
+
+@keyframes pageLoad {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .app-container {
     display: flex;
     min-height: 100vh;
+    animation: containerFadeIn 1s ease-out 0.2s both;
+}
+
+@keyframes containerFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* 侧边栏样式 */
@@ -59,32 +83,47 @@ body {
     width: var(--sidebar-width);
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-md);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
     position: relative;
     z-index: 10;
+    transform: translateX(0);
 }
 
 .sidebar.collapsed {
     width: var(--sidebar-collapsed);
+    transform: translateX(0);
 }
 
 .sidebar.collapsed .sidebar-content {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+    transform: translateX(-20px);
+    transition: all 0.3s ease 0.1s;
+}
+
+.sidebar:not(.collapsed) .sidebar-content {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+    transition: all 0.4s ease 0.2s;
 }
 
 .sidebar.collapsed .logo h1 {
     opacity: 0;
     transform: scale(0);
+    transition: all 0.2s ease;
 }
 
-.sidebar.collapsed .theme-btn {
-    margin: 0 auto;
+.sidebar:not(.collapsed) .logo h1 {
+    opacity: 1;
+    transform: scale(1);
+    transition: all 0.3s ease 0.3s;
 }
 
 .sidebar-header {
@@ -93,6 +132,18 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    animation: slideDown 0.6s ease-out 0.4s both;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .logo h1 {
@@ -100,6 +151,10 @@ body {
     font-weight: 700;
     color: var(--text-primary);
     transition: all 0.3s ease;
+    background: var(--accent-color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .sidebar-actions {
@@ -111,30 +166,65 @@ body {
     width: 32px;
     height: 32px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--bg-accent);
     color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--accent-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 12px;
+}
+
+.theme-btn:hover::before {
+    opacity: 0.1;
 }
 
 .theme-btn:hover {
-    background: var(--bg-card);
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.theme-btn:active {
+    transform: translateY(0) scale(0.95);
 }
 
 .sidebar-content {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-section {
     margin-bottom: 24px;
+    animation: slideUp 0.6s ease-out 0.5s both;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .search-container {
@@ -148,17 +238,18 @@ body {
     left: 12px;
     color: var(--text-muted);
     z-index: 1;
+    transition: all 0.3s ease;
 }
 
 .search-input {
     width: 100%;
     padding: 12px 40px;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 16px;
     font-size: 14px;
     background: var(--bg-accent);
     color: var(--text-primary);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input:focus {
@@ -166,10 +257,17 @@ body {
     border-color: #6366f1;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     background: var(--bg-card);
+    transform: translateY(-1px);
+}
+
+.search-input:focus + .search-icon {
+    color: #6366f1;
+    transform: scale(1.1);
 }
 
 .groups-section {
     flex: 1;
+    animation: slideUp 0.6s ease-out 0.6s both;
 }
 
 .section-header {
@@ -194,20 +292,45 @@ body {
     width: 32px;
     height: 32px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--bg-accent);
     color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: var(--accent-color);
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    transform: translate(-50%, -50%);
+    opacity: 0.2;
+}
+
+.action-btn:hover::before {
+    width: 100%;
+    height: 100%;
 }
 
 .action-btn:hover {
-    background: var(--accent-color);
     color: white;
-    transform: translateY(-1px);
+    transform: translateY(-2px) rotate(5deg);
+    box-shadow: var(--shadow-md);
+}
+
+.action-btn:active {
+    transform: translateY(0) rotate(0deg) scale(0.95);
 }
 
 .filter-nav {
@@ -222,28 +345,47 @@ body {
     gap: 12px;
     padding: 12px 16px;
     border: none;
-    border-radius: 12px;
+    border-radius: 16px;
     background: transparent;
     color: var(--text-secondary);
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
     width: 100%;
     position: relative;
+    overflow: hidden;
+}
+
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.filter-btn:hover::before {
+    left: 100%;
 }
 
 .filter-btn:hover,
 .filter-btn.active {
     background: var(--bg-accent);
     color: var(--text-primary);
-    transform: translateX(4px);
+    transform: translateX(8px) scale(1.02);
+    box-shadow: var(--shadow-sm);
 }
 
 .filter-btn.active {
     background: var(--accent-color);
     color: white;
     font-weight: 500;
+    transform: translateX(8px) scale(1.02);
+    box-shadow: var(--shadow-md);
 }
 
 .group-name {
@@ -253,19 +395,26 @@ body {
 .count {
     background: rgba(255, 255, 255, 0.2);
     color: currentColor;
-    padding: 2px 8px;
+    padding: 4px 8px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
     min-width: 20px;
     text-align: center;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover .count,
+.filter-btn.active .count {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
 }
 
 .group-actions {
     display: flex;
     gap: 4px;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
 }
 
 .filter-btn:hover .group-actions {
@@ -276,7 +425,7 @@ body {
     width: 20px;
     height: 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.1);
     color: currentColor;
     cursor: pointer;
@@ -288,8 +437,8 @@ body {
 }
 
 .group-action-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.2) rotate(90deg);
 }
 
 /* 侧边栏折叠按钮 */
@@ -308,7 +457,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
     z-index: 20;
@@ -317,11 +466,22 @@ body {
 .sidebar-toggle-btn:hover {
     background: var(--accent-color);
     color: white;
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.2) rotate(180deg);
+    box-shadow: var(--shadow-lg);
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
+    right: -12px;
 }
 
 .sidebar.collapsed .sidebar-toggle-btn svg {
     transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+.sidebar:not(.collapsed) .sidebar-toggle-btn svg {
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
 }
 
 /* 主内容区 */
@@ -330,7 +490,19 @@ body {
     display: flex;
     flex-direction: column;
     background: var(--bg-primary);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideLeft 0.8s ease-out 0.3s both;
+}
+
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .content-header {
@@ -340,13 +512,18 @@ body {
     justify-content: space-between;
     align-items: center;
     background: var(--bg-secondary);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    animation: slideDown 0.6s ease-out 0.7s both;
 }
 
 .content-header h2 {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
+    background: var(--accent-color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .view-options {
@@ -358,27 +535,60 @@ body {
     width: 36px;
     height: 36px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--bg-accent);
     color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.view-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--accent-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 12px;
+}
+
+.view-btn:hover::after,
+.view-btn.active::after {
+    opacity: 1;
 }
 
 .view-btn:hover,
 .view-btn.active {
-    background: var(--accent-color);
     color: white;
     border-color: transparent;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-md);
 }
 
 .bookmarks-container {
     flex: 1;
     padding: 30px;
     overflow-y: auto;
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .bookmarks-grid {
@@ -396,21 +606,28 @@ body {
 
 .bookmark-card {
     background: var(--bg-card);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 20px;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    animation: cardFadeIn 0.6s ease-out both;
+    animation-delay: calc(var(--card-index, 0) * 0.1s);
 }
 
-.bookmark-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: #6366f1;
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .bookmark-card::before {
@@ -425,8 +642,36 @@ body {
     transition: opacity 0.3s ease;
 }
 
+.bookmark-card::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    left: -2px;
+    background: var(--accent-color);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 22px;
+}
+
+.bookmark-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+}
+
 .bookmark-card:hover::before {
     opacity: 1;
+}
+
+.bookmark-card:hover::after {
+    opacity: 0.1;
+}
+
+.bookmark-card:active {
+    transform: translateY(-4px) scale(0.98);
 }
 
 .bookmark-header {
@@ -438,7 +683,7 @@ body {
 .bookmark-favicon {
     width: 24px;
     height: 24px;
-    border-radius: 6px;
+    border-radius: 8px;
     margin-right: 12px;
     background: var(--bg-accent);
     display: flex;
@@ -446,6 +691,11 @@ body {
     justify-content: center;
     font-size: 12px;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.bookmark-card:hover .bookmark-favicon {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .bookmark-title {
@@ -456,37 +706,26 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+    transition: color 0.3s ease;
 }
 
 .bookmark-actions {
     display: flex;
     gap: 8px;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(10px);
 }
 
 .bookmark-card:hover .bookmark-actions {
     opacity: 1;
+    transform: translateX(0);
 }
 
-.action-btn {
+.bookmark-actions .action-btn {
     width: 28px;
     height: 28px;
-    border: none;
-    border-radius: 6px;
-    background: var(--bg-accent);
-    color: var(--text-secondary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-    background: var(--accent-color);
-    color: white;
-    transform: scale(1.1);
+    border-radius: 8px;
 }
 
 .bookmark-url {
@@ -496,16 +735,24 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
     margin-bottom: 8px;
+    transition: color 0.3s ease;
 }
 
 .bookmark-group {
     display: inline-block;
     background: var(--bg-accent);
     color: var(--text-secondary);
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 16px;
     font-size: 12px;
     font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.bookmark-card:hover .bookmark-group {
+    background: var(--accent-color);
+    color: white;
+    transform: scale(1.05);
 }
 
 /* 列表视图样式 */
@@ -514,15 +761,29 @@ body {
     align-items: center;
     padding: 16px 20px;
     background: var(--bg-card);
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--border-color);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    animation: listItemFadeIn 0.4s ease-out both;
+    animation-delay: calc(var(--item-index, 0) * 0.05s);
+}
+
+@keyframes listItemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .bookmark-list-item:hover {
     background: var(--bg-secondary);
-    transform: translateX(4px);
+    transform: translateX(8px) scale(1.01);
+    box-shadow: var(--shadow-md);
 }
 
 .bookmark-list-item .bookmark-favicon {
@@ -547,6 +808,12 @@ body {
     justify-content: center;
     padding: 60px 20px;
     color: var(--text-muted);
+    animation: loadingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
 .loading-spinner {
@@ -555,7 +822,7 @@ body {
     border: 3px solid var(--border-color);
     border-top: 3px solid var(--accent-color);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite, colorShift 3s ease-in-out infinite;
     margin-bottom: 16px;
 }
 
@@ -564,11 +831,23 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+@keyframes colorShift {
+    0%, 100% { border-top-color: #6366f1; }
+    33% { border-top-color: #8b5cf6; }
+    66% { border-top-color: #06b6d4; }
+}
+
 .empty-state {
     grid-column: 1 / -1;
     text-align: center;
     padding: 60px 20px;
     color: var(--text-muted);
+    animation: emptyStateFloat 3s ease-in-out infinite;
+}
+
+@keyframes emptyStateFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .empty-state svg {
@@ -576,6 +855,12 @@ body {
     height: 64px;
     margin-bottom: 16px;
     opacity: 0.6;
+    animation: iconFloat 2s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(5deg); }
 }
 
 /* 模态框样式 */
@@ -590,18 +875,43 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(10px);
+    animation: modalBackdropFadeIn 0.3s ease-out;
+}
+
+@keyframes modalBackdropFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(10px);
+    }
 }
 
 .modal-content {
     background: var(--bg-card);
-    border-radius: 20px;
+    border-radius: 24px;
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border-color);
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .modal-header {
@@ -610,52 +920,74 @@ body {
     align-items: center;
     padding: 24px;
     border-bottom: 1px solid var(--border-color);
+    animation: slideDown 0.5s ease-out 0.2s both;
 }
 
 .modal-header h3 {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
+    background: var(--accent-color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .close-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
-    border-radius: 8px;
-    transition: background 0.2s ease;
+    padding: 8px;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--text-secondary);
 }
 
 .close-btn:hover {
     background: var(--bg-accent);
+    transform: scale(1.1) rotate(90deg);
+    color: var(--text-primary);
 }
 
 .modal-body {
     padding: 24px;
+    animation: slideUp 0.5s ease-out 0.3s both;
 }
 
 .form-group {
     margin-bottom: 20px;
+    animation: formFieldSlide 0.4s ease-out both;
+    animation-delay: calc(var(--field-index, 0) * 0.1s);
+}
+
+@keyframes formFieldSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-weight: 500;
     color: var(--text-primary);
     font-size: 14px;
+    transition: color 0.3s ease;
 }
 
 .form-input,
 .form-select {
     width: 100%;
-    padding: 12px;
+    padding: 14px 16px;
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 14px;
-    transition: border-color 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: var(--bg-accent);
     color: var(--text-primary);
 }
@@ -665,6 +997,8 @@ body {
     outline: none;
     border-color: #6366f1;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    transform: translateY(-2px);
+    background: var(--bg-card);
 }
 
 .modal-footer {
@@ -673,55 +1007,102 @@ body {
     justify-content: flex-end;
     padding: 24px;
     border-top: 1px solid var(--border-color);
+    animation: slideUp 0.5s ease-out 0.4s both;
 }
 
 .btn-primary {
     background: var(--accent-color);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
 }
 
 .btn-primary:hover {
     background: var(--accent-hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.95);
 }
 
 .btn-secondary {
     background: var(--bg-accent);
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-secondary:hover {
     background: var(--bg-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 24px;
+    border-radius: 12px;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-danger::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-danger:hover::before {
+    left: 100%;
 }
 
 .btn-danger:hover {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    transform: translateY(-1px);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger:active {
+    transform: translateY(0) scale(0.95);
 }
 
 /* 响应式设计 */
@@ -731,6 +1112,7 @@ body {
         left: -100%;
         z-index: 100;
         height: 100vh;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .sidebar.open {
@@ -753,6 +1135,10 @@ body {
     .bookmarks-container {
         padding: 20px;
     }
+
+    .bookmark-card {
+        animation-delay: calc(var(--card-index, 0) * 0.05s);
+    }
 }
 
 /* 滚动条样式 */
@@ -768,6 +1154,7 @@ body {
 ::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 4px;
+    transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -786,6 +1173,74 @@ body {
     }
 }
 
-.bookmark-card {
-    animation: fadeIn 0.3s ease;
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* 全局动画类 */
+.animate-bounce {
+    animation: bounce 1s ease-in-out;
+}
+
+.animate-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+.animate-pulse {
+    animation: loadingPulse 2s ease-in-out infinite;
+}
+
+/* 交互反馈 */
+.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.clickable:active {
+    transform: scale(0.95);
+}
+
+/* 微妙的背景动效 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+    animation: backgroundShift 20s ease-in-out infinite;
+}
+
+@keyframes backgroundShift {
+    0%, 100% {
+        transform: translateX(0) translateY(0);
+    }
+    25% {
+        transform: translateX(20px) translateY(-10px);
+    }
+    50% {
+        transform: translateX(-10px) translateY(20px);
+    }
+    75% {
+        transform: translateX(15px) translateY(15px);
+    }
 }
