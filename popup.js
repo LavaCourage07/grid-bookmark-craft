@@ -1,13 +1,40 @@
-
 class BookmarkManager {
     constructor() {
+        this.currentTheme = localStorage.getItem('bookmarkTheme') || 'light';
         this.init();
     }
 
     async init() {
+        this.initTheme();
         await this.loadCurrentPage();
         await this.loadGroups();
         this.bindEvents();
+    }
+
+    initTheme() {
+        document.body.setAttribute('data-theme', this.currentTheme);
+        this.updateThemeIcon();
+    }
+
+    updateThemeIcon() {
+        const themeBtn = document.getElementById('themeToggle');
+        const isDark = this.currentTheme === 'dark';
+        
+        themeBtn.innerHTML = isDark ? 
+            `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>` :
+            `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>`;
     }
 
     async loadCurrentPage() {
@@ -17,6 +44,18 @@ class BookmarkManager {
             document.getElementById('pageUrl').textContent = tab.url;
             document.getElementById('bookmarkTitle').value = tab.title;
             document.getElementById('bookmarkUrl').value = tab.url;
+            
+            // 加载页面图标
+            const favicon = document.getElementById('pageFavicon');
+            if (tab.favIconUrl) {
+                favicon.src = tab.favIconUrl;
+                favicon.style.display = 'block';
+            } else {
+                // 使用默认图标服务
+                const domain = new URL(tab.url).hostname;
+                favicon.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+                favicon.style.display = 'block';
+            }
         } catch (error) {
             console.error('获取当前页面信息失败:', error);
         }
@@ -47,6 +86,11 @@ class BookmarkManager {
     }
 
     bindEvents() {
+        // 主题切换
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            this.toggleTheme();
+        });
+
         // 添加书签按钮
         document.getElementById('addBookmark').addEventListener('click', () => {
             document.getElementById('bookmarkForm').style.display = 'block';
@@ -83,6 +127,13 @@ class BookmarkManager {
         document.getElementById('importBookmarks').addEventListener('click', () => {
             this.importBookmarks();
         });
+    }
+
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('bookmarkTheme', this.currentTheme);
+        document.body.setAttribute('data-theme', this.currentTheme);
+        this.updateThemeIcon();
     }
 
     async saveBookmark() {
@@ -160,12 +211,13 @@ class BookmarkManager {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             z-index: 1000;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
             animation: slideIn 0.3s ease;
         `;
         

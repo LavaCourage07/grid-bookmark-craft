@@ -1,17 +1,71 @@
-
 class NewTabBookmarkManager {
     constructor() {
         this.bookmarks = [];
         this.currentFilter = 'all';
         this.currentEditBookmark = null;
+        this.currentView = 'grid';
+        this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        this.currentTheme = localStorage.getItem('bookmarkTheme') || 'light';
         this.init();
     }
 
     async init() {
+        this.initTheme();
+        this.initSidebar();
         await this.loadBookmarks();
         this.setupEventListeners();
         this.renderBookmarks();
         this.setupSearch();
+    }
+
+    initTheme() {
+        document.body.setAttribute('data-theme', this.currentTheme);
+        this.updateThemeIcon();
+    }
+
+    initSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (this.sidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+        }
+        this.updateSidebarToggleIcon();
+    }
+
+    updateThemeIcon() {
+        const themeBtn = document.getElementById('themeToggle');
+        const isDark = this.currentTheme === 'dark';
+        
+        themeBtn.innerHTML = isDark ? 
+            `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>` :
+            `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>`;
+    }
+
+    updateSidebarToggleIcon() {
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const isCollapsed = this.sidebarCollapsed;
+        
+        toggleBtn.innerHTML = isCollapsed ?
+            `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="9" y1="18" x2="21" y2="6"></line>
+                <line x1="21" y1="18" x2="9" y2="6"></line>
+            </svg>` :
+            `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>`;
     }
 
     async loadBookmarks() {
@@ -62,6 +116,25 @@ class NewTabBookmarkManager {
     }
 
     setupEventListeners() {
+        // 主题切换
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            this.toggleTheme();
+        });
+
+        // 侧边栏切换
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            this.toggleSidebar();
+        });
+
+        // 视图切换
+        document.getElementById('gridView').addEventListener('click', () => {
+            this.setView('grid');
+        });
+
+        document.getElementById('listView').addEventListener('click', () => {
+            this.setView('list');
+        });
+
         // 导入按钮
         document.getElementById('importBtn').addEventListener('click', () => {
             this.importBookmarks();
@@ -95,15 +168,59 @@ class NewTabBookmarkManager {
         });
     }
 
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('bookmarkTheme', this.currentTheme);
+        document.body.setAttribute('data-theme', this.currentTheme);
+        this.updateThemeIcon();
+    }
+
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+        
+        const sidebar = document.getElementById('sidebar');
+        if (this.sidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+        } else {
+            sidebar.classList.remove('collapsed');
+        }
+        
+        this.updateSidebarToggleIcon();
+    }
+
+    setView(view) {
+        this.currentView = view;
+        
+        // 更新按钮状态
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(`${view}View`).classList.add('active');
+        
+        // 重新渲染书签
+        this.renderBookmarks();
+    }
+
     renderGroupFilters() {
         const container = document.getElementById('groupFilters');
         const uniqueGroups = [...new Set(this.bookmarks.map(b => b.group))];
         
+        // 更新全部书签计数
+        document.getElementById('allCount').textContent = this.bookmarks.length;
+        
         container.innerHTML = '';
         uniqueGroups.forEach(group => {
+            const count = this.bookmarks.filter(b => b.group === group).length;
             const button = document.createElement('button');
             button.className = 'filter-btn';
-            button.textContent = group;
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>${group}</span>
+                <span class="count">${count}</span>
+            `;
             button.dataset.group = group;
             button.addEventListener('click', () => this.filterBookmarksBy(group));
             container.appendChild(button);
@@ -115,7 +232,14 @@ class NewTabBookmarkManager {
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector(`[data-group="${group}"]`).classList.add('active');
+        
+        if (group === 'all') {
+            document.querySelector('[data-group="all"]').classList.add('active');
+            document.getElementById('currentGroupTitle').textContent = '全部书签';
+        } else {
+            document.querySelector(`[data-group="${group}"]`).classList.add('active');
+            document.getElementById('currentGroupTitle').textContent = group;
+        }
         
         this.currentFilter = group;
         this.renderBookmarks();
@@ -156,10 +280,21 @@ class NewTabBookmarkManager {
             return;
         }
         
-        container.innerHTML = bookmarks.map(bookmark => this.createBookmarkHTML(bookmark)).join('');
+        // 设置容器类名
+        container.className = this.currentView === 'grid' ? 'bookmarks-container' : 'bookmarks-container';
+        
+        if (this.currentView === 'grid') {
+            container.innerHTML = `<div class="bookmarks-grid">${bookmarks.map(bookmark => this.createBookmarkHTML(bookmark)).join('')}</div>`;
+        } else {
+            container.innerHTML = `<div class="bookmarks-list">${bookmarks.map(bookmark => this.createBookmarkListHTML(bookmark)).join('')}</div>`;
+        }
         
         // 绑定事件
-        container.querySelectorAll('.bookmark-card').forEach(card => {
+        this.bindBookmarkEvents(container, bookmarks);
+    }
+
+    bindBookmarkEvents(container, bookmarks) {
+        container.querySelectorAll('.bookmark-card, .bookmark-list-item').forEach(card => {
             const bookmarkId = card.dataset.id;
             const bookmark = bookmarks.find(b => b.id === bookmarkId);
             
@@ -200,7 +335,7 @@ class NewTabBookmarkManager {
                     ${isCustom ? `
                         <div class="bookmark-actions">
                             <button class="action-btn edit-btn" title="编辑">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
@@ -210,6 +345,32 @@ class NewTabBookmarkManager {
                 </div>
                 <div class="bookmark-url">${domain}</div>
                 <div class="bookmark-group">${bookmark.group}</div>
+            </div>
+        `;
+    }
+
+    createBookmarkListHTML(bookmark) {
+        const domain = new URL(bookmark.url).hostname;
+        const isCustom = !bookmark.isChrome;
+        
+        return `
+            <div class="bookmark-list-item" data-id="${bookmark.id}">
+                <img class="bookmark-favicon" src="${bookmark.favicon}" alt="" onerror="this.style.display='none'">
+                <div class="bookmark-list-content">
+                    <div class="bookmark-title">${bookmark.title}</div>
+                    <div class="bookmark-url">${domain}</div>
+                </div>
+                <div class="bookmark-group">${bookmark.group}</div>
+                ${isCustom ? `
+                    <div class="bookmark-actions">
+                        <button class="action-btn edit-btn" title="编辑">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -379,13 +540,14 @@ class NewTabBookmarkManager {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+            background: ${type === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
             color: white;
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             z-index: 1001;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 16px ${type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
+            animation: slideIn 0.3s ease;
         `;
         
         document.body.appendChild(messageDiv);
