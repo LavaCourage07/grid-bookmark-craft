@@ -140,30 +140,51 @@ class NewTabBookmarkManager {
             this.importBookmarks();
         });
 
-        // 关闭模态框
+        // 新增分组按钮
+        document.getElementById('addGroupBtn').addEventListener('click', () => {
+            this.openAddGroupModal();
+        });
+
+        // 编辑书签模态框事件
         document.getElementById('closeModal').addEventListener('click', () => {
             this.closeEditModal();
         });
 
-        // 保存编辑
         document.getElementById('saveEdit').addEventListener('click', () => {
             this.saveEdit();
         });
 
-        // 删除书签
         document.getElementById('deleteBookmark').addEventListener('click', () => {
             this.deleteBookmark();
         });
 
-        // 取消编辑
         document.getElementById('cancelEdit').addEventListener('click', () => {
             this.closeEditModal();
+        });
+
+        // 新增分组模态框事件
+        document.getElementById('closeAddGroupModal').addEventListener('click', () => {
+            this.closeAddGroupModal();
+        });
+
+        document.getElementById('saveNewGroup').addEventListener('click', () => {
+            this.saveNewGroup();
+        });
+
+        document.getElementById('cancelAddGroup').addEventListener('click', () => {
+            this.closeAddGroupModal();
         });
 
         // 点击模态框外部关闭
         document.getElementById('editModal').addEventListener('click', (e) => {
             if (e.target.id === 'editModal') {
                 this.closeEditModal();
+            }
+        });
+
+        document.getElementById('addGroupModal').addEventListener('click', (e) => {
+            if (e.target.id === 'addGroupModal') {
+                this.closeAddGroupModal();
             }
         });
     }
@@ -218,11 +239,30 @@ class NewTabBookmarkManager {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                 </svg>
-                <span>${group}</span>
+                <span class="group-name">${group}</span>
                 <span class="count">${count}</span>
+                <div class="group-actions">
+                    <button class="group-action-btn delete-group-btn" data-group="${group}" title="删除分组">
+                        ×
+                    </button>
+                </div>
             `;
             button.dataset.group = group;
-            button.addEventListener('click', () => this.filterBookmarksBy(group));
+            
+            // 分组筛选事件
+            button.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('delete-group-btn')) {
+                    this.filterBookmarksBy(group);
+                }
+            });
+            
+            // 删除分组事件
+            const deleteBtn = button.querySelector('.delete-group-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteGroup(group);
+            });
+            
             container.appendChild(button);
         });
     }
@@ -462,6 +502,77 @@ class NewTabBookmarkManager {
         this.closeEditModal();
         
         this.showMessage('书签已删除', 'success');
+    }
+
+    openAddGroupModal() {
+        document.getElementById('newGroupName').value = '';
+        document.getElementById('addGroupModal').style.display = 'flex';
+    }
+
+    closeAddGroupModal() {
+        document.getElementById('addGroupModal').style.display = 'none';
+    }
+
+    async saveNewGroup() {
+        const groupName = document.getElementById('newGroupName').value.trim();
+        
+        if (!groupName) {
+            alert('请输入分组名称');
+            return;
+        }
+        
+        if (this.groups.includes(groupName)) {
+            alert('分组已存在');
+            return;
+        }
+        
+        // 添加到分组列表
+        this.groups.push(groupName);
+        
+        // 保存到存储
+        await chrome.storage.sync.set({ bookmarkGroups: this.groups });
+        
+        // 刷新显示
+        this.renderGroupFilters();
+        this.closeAddGroupModal();
+        
+        this.showMessage('分组已添加', 'success');
+    }
+
+    async deleteGroup(groupName) {
+        if (groupName === '其他') {
+            alert('默认分组不能删除');
+            return;
+        }
+        
+        if (!confirm(`确定要删除分组"${groupName}"吗？该分组下的书签将移动到"其他"分组。`)) return;
+        
+        // 将该分组下的书签移动到"其他"分组
+        this.bookmarks.forEach(bookmark => {
+            if (bookmark.group === groupName && !bookmark.isChrome) {
+                bookmark.group = '其他';
+            }
+        });
+        
+        // 从分组列表中移除
+        this.groups = this.groups.filter(g => g !== groupName);
+        
+        // 保存到存储
+        await Promise.all([
+            chrome.storage.sync.set({ bookmarkGroups: this.groups }),
+            this.saveBookmarksToStorage()
+        ]);
+        
+        // 如果当前筛选的是被删除的分组，切换到全部
+        if (this.currentFilter === groupName) {
+            this.filterBookmarksBy('all');
+        }
+        
+        // 刷新显示
+        this.renderBookmarks();
+        this.renderGroupFilters();
+        
+        this.showMessage('分组已删除', 'success');
     }
 
     async saveBookmarksToStorage() {
