@@ -1,4 +1,3 @@
-
 :root {
   /* Light theme */
   --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -91,11 +90,20 @@ body {
     position: relative;
     z-index: 10;
     transform: translateX(0);
+    height: 100vh;
+    max-height: 100vh;
 }
 
 .sidebar.collapsed {
-    width: var(--sidebar-collapsed);
-    transform: translateX(0);
+    transform: translateX(-100%);
+}
+
+.sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .sidebar.collapsed .sidebar-content {
@@ -127,12 +135,13 @@ body {
 }
 
 .sidebar-header {
-    padding: 20px;
+    padding: 22px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
     animation: slideDown 0.6s ease-out 0.4s both;
+    flex-shrink: 0;
 }
 
 @keyframes slideDown {
@@ -204,16 +213,10 @@ body {
     transform: translateY(0) scale(0.95);
 }
 
-.sidebar-content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .search-section {
-    margin-bottom: 24px;
+    margin: 20px 20px 24px 20px;
     animation: slideUp 0.6s ease-out 0.5s both;
+    flex-shrink: 0;
 }
 
 @keyframes slideUp {
@@ -267,6 +270,10 @@ body {
 
 .groups-section {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0 20px 20px 20px;
     animation: slideUp 0.6s ease-out 0.6s both;
 }
 
@@ -275,6 +282,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    flex-shrink: 0;
 }
 
 .section-header h3 {
@@ -337,6 +345,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 14px;
+    margin-right: -8px;
 }
 
 .filter-btn {
@@ -355,6 +367,12 @@ body {
     width: 100%;
     position: relative;
     overflow: hidden;
+}
+
+/* 确保全部分组按钮有正确的padding */
+.filter-btn[data-group="all"] {
+    padding: 23px 16px;
+    border-radius: 16px;
 }
 
 .filter-btn::before {
@@ -443,9 +461,14 @@ body {
 
 /* 侧边栏折叠按钮 */
 .sidebar-toggle-btn {
+    display: none !important;
+}
+
+/* 侧边栏折叠按钮 */
+.sidebar-toggle-btn {
     position: absolute;
     top: 50%;
-    right: -12px;
+    right: -16px;
     transform: translateY(-50%);
     width: 24px;
     height: 24px;
@@ -460,27 +483,57 @@ body {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
-    z-index: 20;
+    z-index: 100;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    transform: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.sidebar:not(.collapsed) .sidebar-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: -16px;
+    left: auto;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .sidebar-toggle-btn:hover {
     background: var(--accent-color);
     color: white;
-    transform: translateY(-50%) scale(1.2) rotate(180deg);
+    transform: translateY(-50%) scale(1.2);
     box-shadow: var(--shadow-lg);
 }
 
-.sidebar.collapsed .sidebar-toggle-btn {
-    right: -12px;
+.sidebar.collapsed .sidebar-toggle-btn:hover {
+    transform: scale(1.1);
 }
 
 .sidebar.collapsed .sidebar-toggle-btn svg {
-    transform: rotate(180deg);
+    transform: rotate(0deg);
     transition: transform 0.3s ease;
 }
 
 .sidebar:not(.collapsed) .sidebar-toggle-btn svg {
-    transform: rotate(0deg);
+    transform: rotate(180deg);
     transition: transform 0.3s ease;
 }
 
@@ -492,6 +545,19 @@ body {
     background: var(--bg-primary);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideLeft 0.8s ease-out 0.3s both;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+.app-container:has(.sidebar.collapsed) .main-content {
+    margin-left: 0;
+    width: 100%;
+}
+
+.sidebar.collapsed ~ .main-content {
+    margin-left: 0;
+    width: 100%;
 }
 
 @keyframes slideLeft {
@@ -514,6 +580,8 @@ body {
     background: var(--bg-secondary);
     backdrop-filter: blur(20px);
     animation: slideDown 0.6s ease-out 0.7s both;
+    flex-shrink: 0;
+    z-index: 5;
 }
 
 .content-header h2 {
@@ -547,6 +615,12 @@ body {
     overflow: hidden;
 }
 
+.view-btn svg {
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s ease;
+}
+
 .view-btn::after {
     content: '';
     position: absolute;
@@ -558,6 +632,7 @@ body {
     opacity: 0;
     transition: opacity 0.3s ease;
     border-radius: 12px;
+    z-index: 1;
 }
 
 .view-btn:hover::after,
@@ -578,6 +653,7 @@ body {
     padding: 30px;
     overflow-y: auto;
     animation: fadeInUp 0.8s ease-out 0.5s both;
+    min-height: 0;
 }
 
 @keyframes fadeInUp {
@@ -617,6 +693,10 @@ body {
     backdrop-filter: blur(20px);
     animation: cardFadeIn 0.6s ease-out both;
     animation-delay: calc(var(--card-index, 0) * 0.1s);
+    min-height: 160px;
+    max-height: 180px;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes cardFadeIn {
@@ -664,6 +744,7 @@ body {
 
 .bookmark-card:hover::before {
     opacity: 1;
+    opacity: 0;
 }
 
 .bookmark-card:hover::after {
@@ -678,6 +759,7 @@ body {
     display: flex;
     align-items: center;
     margin-bottom: 12px;
+    flex-shrink: 0;
 }
 
 .bookmark-favicon {
@@ -692,10 +774,15 @@ body {
     font-size: 12px;
     flex-shrink: 0;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .bookmark-card:hover .bookmark-favicon {
     transform: scale(1.1) rotate(5deg);
+}
+
+.bookmark-list-item .bookmark-favicon {
+    margin-right: 16px;
 }
 
 .bookmark-title {
@@ -736,6 +823,7 @@ body {
     white-space: nowrap;
     margin-bottom: 8px;
     transition: color 0.3s ease;
+    flex: 1;
 }
 
 .bookmark-group {
@@ -747,6 +835,9 @@ body {
     font-size: 12px;
     font-weight: 500;
     transition: all 0.3s ease;
+    margin-top: auto;
+    width: fit-content;
+    align-self: flex-start;
 }
 
 .bookmark-card:hover .bookmark-group {
@@ -784,10 +875,6 @@ body {
     background: var(--bg-secondary);
     transform: translateX(8px) scale(1.01);
     box-shadow: var(--shadow-md);
-}
-
-.bookmark-list-item .bookmark-favicon {
-    margin-right: 16px;
 }
 
 .bookmark-list-content {
@@ -1109,18 +1196,66 @@ body {
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
-        left: -100%;
+        left: 0;
         z-index: 100;
         height: 100vh;
-        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 100vh;
+        transform: translateX(0);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    .sidebar.open {
-        left: 0;
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar:not(.collapsed) {
+        transform: translateX(0);
     }
     
     .main-content {
         margin-left: 0;
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+    }
+    
+    .sidebar-toggle-btn {
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        z-index: 101;
+        transform: none !important;
+    }
+    
+    .sidebar.collapsed .sidebar-toggle-btn {
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+        transform: none !important;
+    }
+    
+    .sidebar:not(.collapsed) .sidebar-toggle-btn {
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+        transform: none !important;
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+    }
+    
+    .sidebar-toggle-btn:hover {
+        transform: scale(1.1) !important;
     }
     
     .bookmarks-grid {
@@ -1130,14 +1265,33 @@ body {
     
     .content-header {
         padding: 16px 20px;
+        flex-shrink: 0;
     }
     
     .bookmarks-container {
         padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        -webkit-overflow-scrolling: touch;
     }
 
     .bookmark-card {
         animation-delay: calc(var(--card-index, 0) * 0.05s);
+    }
+    
+    /* 移动端分组列表滚动优化 */
+    .filter-nav {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .filter-nav::-webkit-scrollbar {
+        width: 2px;
+    }
+    
+    /* 移动端书签容器滚动条样式 */
+    .bookmarks-container::-webkit-scrollbar {
+        width: 6px;
     }
 }
 
@@ -1159,6 +1313,59 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
+}
+
+/* 分组列表专用滚动条样式 */
+.filter-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.filter-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.filter-nav::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.filter-nav::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.filter-nav:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+}
+
+/* 书签容器专用滚动条样式 */
+.bookmarks-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.bookmarks-container::-webkit-scrollbar-track {
+    background: var(--bg-accent);
+    border-radius: 4px;
+}
+
+.bookmarks-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.bookmarks-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 在深色主题下的滚动条样式优化 */
+[data-theme="dark"] .bookmarks-container::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .bookmarks-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.6);
 }
 
 /* 动画效果 */
@@ -1198,6 +1405,8 @@ body {
 
 .animate-shake {
     animation: shake 0.5s ease-in-out;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
 }
 
 .animate-pulse {
@@ -1243,4 +1452,328 @@ body::before {
     75% {
         transform: translateX(15px) translateY(15px);
     }
+} 
+
+/* 新增弹出消息样式 */
+.message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    box-shadow: var(--shadow-lg);
+    z-index: 10000;
+    animation: messageSlideIn 0.3s ease;
+    max-width: 300px;
 }
+
+.message.success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.message.error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* 确认删除模态框特殊样式 */
+.confirm-message {
+    text-align: center;
+    padding: 20px;
+}
+
+.confirm-message svg {
+    display: block;
+    margin: 0 auto 16px;
+}
+
+.confirm-message p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.bookmark-info {
+    background: var(--bg-accent);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 3px solid #ef4444;
+    font-family: monospace;
+}
+
+/* 危险按钮样式 */
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+} 
+
+/* 输入框错误动画 */
+@keyframes shake {
+    0%, 100% { 
+        transform: translateX(0); 
+    }
+    25% { 
+        transform: translateX(-4px); 
+    }
+    75% { 
+        transform: translateX(4px); 
+    }
+}
+
+.animate-shake {
+    animation: shake 0.5s ease-in-out;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* 表单验证样式 */
+.form-input.error {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.form-input.success {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* 消息滑入动画 */
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+} 
+
+/* 自定义下拉组件样式 */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select {
+    position: relative;
+    width: 100%;
+    background: var(--bg-accent);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.custom-select:hover {
+    border-color: #6366f1;
+}
+
+.custom-select.open {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.custom-select-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    min-height: 46px;
+    transition: all 0.3s ease;
+    background: var(--bg-accent);
+    border-radius: 12px;
+}
+
+.custom-select.open .custom-select-display {
+    background: #ffffff;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.selected-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.dropdown-icon {
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.custom-select.open .dropdown-icon {
+    transform: rotate(180deg);
+    color: #6366f1;
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+    margin-bottom: 0;
+}
+
+.custom-select.open .custom-select-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-select-options {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px 0;
+    border-radius: 12px 12px 0 0;
+    background: #ffffff;
+}
+
+.custom-select-option {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 0 8px;
+    position: relative;
+}
+
+.custom-select-option:hover {
+    background: var(--bg-accent);
+    color: var(--text-primary);
+    transform: translateX(4px);
+}
+
+.custom-select-option.selected {
+    background: var(--accent-color);
+    color: white;
+    font-weight: 500;
+}
+
+.custom-select-option.selected::before {
+    content: '✓';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.custom-select-option.selected:hover {
+    background: var(--accent-hover);
+    transform: translateX(4px);
+}
+
+/* 自定义下拉框滚动条样式 */
+.custom-select-options::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-select-options::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 2px;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 暗色主题下的自定义下拉框 */
+[data-theme="dark"] .custom-select-dropdown {
+    background: #1e293b;
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+[data-theme="dark"] .custom-select-options {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .custom-select-option:hover {
+    background: rgba(51, 65, 85, 0.8);
+}
+
+[data-theme="dark"] .custom-select-display {
+    background: rgba(30, 41, 59, 0.95);
+}
+
+[data-theme="dark"] .custom-select.open .custom-select-display {
+    background: #1e293b;
+}
+
+/* 确保下拉框在模态框中显示正确 */
+.modal .custom-select-dropdown {
+    z-index: 1001;
+}
+
+/* 优化边框连接效果 */
+.custom-select.open {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.custom-select.open .custom-select-dropdown {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .custom-select-options {
+        max-height: 150px;
+    }
+    
+    .custom-select-option {
+        padding: 10px 14px;
+    }
+} 

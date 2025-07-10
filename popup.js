@@ -9,6 +9,14 @@ class BookmarkManager {
         await this.loadCurrentPage();
         await this.loadGroups();
         this.bindEvents();
+        
+        // 监听存储变化，实时更新分组列表
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'sync' && (changes.bookmarkGroups || changes.customBookmarks)) {
+                console.log('检测到分组数据变化，重新加载分组列表');
+                this.loadGroups();
+            }
+        });
     }
 
     initTheme() {
@@ -63,25 +71,181 @@ class BookmarkManager {
 
     async loadGroups() {
         try {
-            const result = await chrome.storage.sync.get(['bookmarkGroups']);
-            const groups = result.bookmarkGroups || ['其他', '工作', '学习', '娱乐'];
-            const select = document.getElementById('bookmarkGroup');
+            const result = await chrome.storage.sync.get(['bookmarkGroups', 'customBookmarks']);
+            const predefinedGroups = result.bookmarkGroups || ['其他', '工作', '学习', '娱乐'];
+            const customBookmarks = result.customBookmarks || [];
             
-            select.innerHTML = '';
-            groups.forEach(group => {
-                const option = document.createElement('option');
-                option.value = group;
-                option.textContent = group;
-                select.appendChild(option);
-            });
-
-            // 添加新建分组选项
-            const newOption = document.createElement('option');
-            newOption.value = '新建分组';
-            newOption.textContent = '+ 新建分组';
-            select.appendChild(newOption);
+            console.log('预定义分组:', predefinedGroups);
+            console.log('现有书签数量:', customBookmarks.length);
+            
+            // 从现有自定义书签中提取分组
+            const customBookmarkGroups = [...new Set(customBookmarks.map(b => b.group))];
+            console.log('从自定义书签中提取的分组:', customBookmarkGroups);
+            
+            // 加载Chrome原生书签的分组
+            const chromeBookmarkGroups = await this.loadChromeBookmarkGroups();
+            console.log('从Chrome书签中提取的分组:', chromeBookmarkGroups);
+            
+            // 合并所有分组：预定义分组 + 自定义书签分组 + Chrome书签分组
+            const allGroups = [...new Set([...predefinedGroups, ...customBookmarkGroups, ...chromeBookmarkGroups])];
+            console.log('合并后的所有分组:', allGroups);
+            
+            // 生成自定义下拉选项
+            this.renderCustomSelectOptions(allGroups);
+            
+            console.log('分组选项已加载完成');
         } catch (error) {
             console.error('加载分组失败:', error);
+        }
+    }
+
+    renderCustomSelectOptions(groups) {
+        const optionsContainer = document.getElementById('customSelectOptions');
+        optionsContainer.innerHTML = '';
+        
+        // 添加常规分组选项
+        groups.forEach(group => {
+            const option = document.createElement('div');
+            option.className = 'custom-select-option';
+            option.textContent = group;
+            option.setAttribute('data-value', group);
+            
+            // 默认选中"其他"
+            if (group === '其他') {
+                option.classList.add('selected');
+                document.querySelector('.selected-text').textContent = group;
+            }
+            
+            optionsContainer.appendChild(option);
+        });
+        
+        // 添加新建分组选项
+        const newGroupOption = document.createElement('div');
+        newGroupOption.className = 'custom-select-option new-group';
+        newGroupOption.textContent = '+ 新建分组';
+        newGroupOption.setAttribute('data-value', '新建分组');
+        optionsContainer.appendChild(newGroupOption);
+        
+        // 绑定事件
+        this.bindCustomSelectEvents();
+    }
+
+    bindCustomSelectEvents() {
+        const customSelect = document.getElementById('bookmarkGroup');
+        const trigger = customSelect.querySelector('.custom-select-display');
+        const options = customSelect.querySelector('.custom-select-options');
+        const selectText = customSelect.querySelector('.selected-text');
+        const newGroupInput = document.getElementById('newGroup');
+        
+        if (!trigger || !options || !selectText) {
+            console.error('找不到自定义下拉组件的必要元素');
+            return;
+        }
+        
+        // 点击触发器显示/隐藏下拉列表
+        trigger.onclick = (e) => {
+            e.stopPropagation();
+            const isOpen = customSelect.classList.contains('open');
+            
+            // 关闭其他可能打开的下拉框
+            document.querySelectorAll('.custom-select.open').forEach(el => {
+                if (el !== customSelect) {
+                    el.classList.remove('open');
+                }
+            });
+            
+            if (isOpen) {
+                customSelect.classList.remove('open');
+            } else {
+                customSelect.classList.add('open');
+            }
+        };
+        
+        // 点击选项
+        options.onclick = (e) => {
+            e.stopPropagation();
+            
+            if (e.target.classList.contains('custom-select-option')) {
+                const value = e.target.getAttribute('data-value');
+                const text = e.target.textContent;
+                
+                // 更新选中状态
+                options.querySelectorAll('.custom-select-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                e.target.classList.add('selected');
+                
+                // 更新显示文本
+                selectText.textContent = text;
+                
+                // 处理新建分组
+                if (value === '新建分组') {
+                    newGroupInput.style.display = 'block';
+                    newGroupInput.focus();
+                } else {
+                    newGroupInput.style.display = 'none';
+                }
+                
+                // 关闭下拉框
+                customSelect.classList.remove('open');
+            }
+        };
+        
+        // 点击外部关闭下拉框
+        document.onclick = (e) => {
+            if (!customSelect.contains(e.target)) {
+                customSelect.classList.remove('open');
+            }
+        };
+        
+        // 阻止下拉框内的点击冒泡
+        customSelect.onclick = (e) => {
+            e.stopPropagation();
+        };
+    }
+
+    getSelectedGroup() {
+        const selectedOption = document.querySelector('.custom-select-option.selected');
+        if (selectedOption) {
+            return selectedOption.getAttribute('data-value');
+        }
+        
+        // 如果没有选中项，返回显示的文本或默认值
+        const selectText = document.querySelector('.selected-text');
+        if (selectText && selectText.textContent.trim() !== '') {
+            return selectText.textContent.trim();
+        }
+        
+        return '其他';
+    }
+
+    async loadChromeBookmarkGroups() {
+        try {
+            const bookmarkTree = await chrome.bookmarks.getTree();
+            const groups = new Set();
+            
+            const extractGroups = (nodes, parentTitle = '其他') => {
+                nodes.forEach(node => {
+                    if (node.url) {
+                        // 这是一个书签，使用父文件夹名称作为分组
+                        if (parentTitle && parentTitle !== 'Bookmarks bar' && parentTitle !== 'Other bookmarks') {
+                            groups.add(parentTitle);
+                        } else if (parentTitle === 'Bookmarks bar') {
+                            groups.add('书签栏');
+                        }
+                    } else if (node.children) {
+                        // 这是一个文件夹，递归处理
+                        const folderName = node.title || '其他';
+                        extractGroups(node.children, folderName);
+                    }
+                });
+            };
+            
+            extractGroups(bookmarkTree);
+            return Array.from(groups).filter(group => group && group !== '其他');
+        } catch (error) {
+            console.error('加载Chrome书签分组失败:', error);
+            return [];
         }
     }
 
@@ -106,17 +270,6 @@ class BookmarkManager {
             this.saveBookmark();
         });
 
-        // 分组选择变化
-        document.getElementById('bookmarkGroup').addEventListener('change', (e) => {
-            const newGroupInput = document.getElementById('newGroup');
-            if (e.target.value === '新建分组') {
-                newGroupInput.style.display = 'block';
-                newGroupInput.focus();
-            } else {
-                newGroupInput.style.display = 'none';
-            }
-        });
-
         // 打开书签管理页
         document.getElementById('openNewtab').addEventListener('click', () => {
             chrome.tabs.create({ url: 'chrome://newtab/' });
@@ -139,7 +292,7 @@ class BookmarkManager {
     async saveBookmark() {
         const title = document.getElementById('bookmarkTitle').value.trim();
         const url = document.getElementById('bookmarkUrl').value.trim();
-        let group = document.getElementById('bookmarkGroup').value;
+        let group = this.getSelectedGroup();
         const newGroup = document.getElementById('newGroup').value.trim();
 
         if (!title || !url) {
@@ -152,144 +305,169 @@ class BookmarkManager {
             await this.addNewGroup(group);
         }
 
+        // 尝试从URL获取favicon
+        let favicon = '';
         try {
-            const bookmark = {
-                id: Date.now().toString(),
-                title,
-                url,
-                group,
-                createdAt: new Date().toISOString(),
-                favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`
-            };
-
-            await this.saveBookmarkToStorage(bookmark);
-            
-            // 显示成功消息
-            this.showSuccessMessage('书签已保存');
-            
-            // 关闭表单
-            document.getElementById('bookmarkForm').style.display = 'none';
-            
-        } catch (error) {
-            console.error('保存书签失败:', error);
-            alert('保存失败，请重试');
+            const domain = new URL(url).hostname;
+            favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+        } catch (e) {
+            // 使用默认图标
+            favicon = '';
         }
+
+        const bookmark = {
+            id: Date.now().toString(),
+            title,
+            url,
+            group,
+            favicon,
+            addedAt: new Date().toISOString()
+        };
+
+        await this.saveBookmarkToStorage(bookmark);
+        this.showSuccessMessage('书签已保存');
+        document.getElementById('bookmarkForm').style.display = 'none';
+        
+        // 重新加载分组列表
+        await this.loadGroups();
     }
 
     async saveBookmarkToStorage(bookmark) {
-        const result = await chrome.storage.sync.get(['customBookmarks']);
-        const bookmarks = result.customBookmarks || [];
-        
-        // 智能去重
-        const existingIndex = bookmarks.findIndex(b => 
-            b.url === bookmark.url && b.group === bookmark.group
-        );
-        
-        if (existingIndex !== -1) {
-            bookmarks[existingIndex] = bookmark;
-        } else {
+        try {
+            const result = await chrome.storage.sync.get(['customBookmarks']);
+            const bookmarks = result.customBookmarks || [];
             bookmarks.push(bookmark);
+            await chrome.storage.sync.set({ customBookmarks: bookmarks });
+        } catch (error) {
+            console.error('保存书签失败:', error);
+            throw error;
         }
-        
-        await chrome.storage.sync.set({ customBookmarks: bookmarks });
     }
 
     async addNewGroup(groupName) {
-        const result = await chrome.storage.sync.get(['bookmarkGroups']);
-        const groups = result.bookmarkGroups || ['其他', '工作', '学习', '娱乐'];
-        
-        if (!groups.includes(groupName)) {
-            groups.push(groupName);
-            await chrome.storage.sync.set({ bookmarkGroups: groups });
+        try {
+            const result = await chrome.storage.sync.get(['bookmarkGroups']);
+            const groups = result.bookmarkGroups || ['其他', '工作', '学习', '娱乐'];
+            if (!groups.includes(groupName)) {
+                groups.push(groupName);
+                await chrome.storage.sync.set({ bookmarkGroups: groups });
+            }
+        } catch (error) {
+            console.error('添加新分组失败:', error);
         }
     }
 
     showSuccessMessage(message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.textContent = message;
-        messageDiv.style.cssText = `
+        // 创建消息元素
+        const messageEl = document.createElement('div');
+        messageEl.className = 'success-message';
+        messageEl.textContent = message;
+        messageEl.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             padding: 12px 20px;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 14px;
-            z-index: 1000;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            font-weight: 500;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             animation: slideIn 0.3s ease;
         `;
-        
-        document.body.appendChild(messageDiv);
-        
+
+        document.body.appendChild(messageEl);
+
+        // 3秒后移除消息
         setTimeout(() => {
-            messageDiv.remove();
-        }, 2000);
+            messageEl.remove();
+        }, 3000);
     }
 
     importBookmarks() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.html';
-        input.onchange = (e) => {
+        input.accept = '.html,.json';
+        input.style.display = 'none';
+        
+        input.onchange = async (e) => {
             const file = e.target.files[0];
             if (file) {
-                this.parseBookmarkFile(file);
+                try {
+                    const bookmarks = await this.parseBookmarkFile(file);
+                    if (bookmarks.length > 0) {
+                        this.showSuccessMessage(`成功导入 ${bookmarks.length} 个书签`);
+                        await this.loadGroups();
+                    }
+                } catch (error) {
+                    console.error('导入失败:', error);
+                    alert('导入失败，请检查文件格式');
+                }
             }
         };
+        
+        document.body.appendChild(input);
         input.click();
+        document.body.removeChild(input);
     }
 
     async parseBookmarkFile(file) {
         const text = await file.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        const links = doc.querySelectorAll('a[href]');
-        
         const bookmarks = [];
-        links.forEach(link => {
-            const url = link.getAttribute('href');
-            const title = link.textContent.trim();
+        
+        // 解析HTML书签文件
+        if (file.name.endsWith('.html')) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, 'text/html');
+            const links = doc.querySelectorAll('a[href]');
             
-            if (url && title && url.startsWith('http')) {
-                bookmarks.push({
+            links.forEach(link => {
+                const bookmark = {
                     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                    title,
-                    url,
+                    title: link.textContent.trim() || 'Untitled',
+                    url: link.href,
                     group: '其他',
-                    createdAt: new Date().toISOString(),
-                    favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`
+                    favicon: '',
+                    addedAt: new Date().toISOString()
+                };
+                bookmarks.push(bookmark);
+            });
+        }
+        
+        // 解析JSON书签文件
+        if (file.name.endsWith('.json')) {
+            const data = JSON.parse(text);
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    if (item.title && item.url) {
+                        const bookmark = {
+                            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                            title: item.title,
+                            url: item.url,
+                            group: item.group || '其他',
+                            favicon: item.favicon || '',
+                            addedAt: new Date().toISOString()
+                        };
+                        bookmarks.push(bookmark);
+                    }
                 });
             }
-        });
-
+        }
+        
+        // 保存到存储
         if (bookmarks.length > 0) {
             const result = await chrome.storage.sync.get(['customBookmarks']);
             const existingBookmarks = result.customBookmarks || [];
-            
-            // 智能去重
-            const uniqueBookmarks = [];
-            bookmarks.forEach(newBookmark => {
-                const exists = existingBookmarks.some(existing => 
-                    existing.url === newBookmark.url && existing.group === newBookmark.group
-                );
-                if (!exists) {
-                    uniqueBookmarks.push(newBookmark);
-                }
-            });
-            
-            const allBookmarks = [...existingBookmarks, ...uniqueBookmarks];
+            const allBookmarks = [...existingBookmarks, ...bookmarks];
             await chrome.storage.sync.set({ customBookmarks: allBookmarks });
-            
-            this.showSuccessMessage(`成功导入 ${uniqueBookmarks.length} 个书签`);
-        } else {
-            alert('未找到有效的书签链接');
         }
+        
+        return bookmarks;
     }
 }
 
-// 初始化
+// 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
     new BookmarkManager();
-});
+}); 

@@ -143,9 +143,21 @@
                 </div>
                 <div class="form-group">
                     <label for="editGroup">分组</label>
-                    <select id="editGroup" class="form-select">
-                        <option value="其他">其他</option>
-                    </select>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="editGroup">
+                            <div class="custom-select-display">
+                                <span class="selected-text">其他</span>
+                                <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6,9 12,15 18,9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="custom-select-dropdown">
+                                <div class="custom-select-options" id="editGroupOptions">
+                                    <div class="custom-select-option" data-value="其他">其他</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -177,6 +189,38 @@
             <div class="modal-footer">
                 <button id="saveNewGroup" class="btn-primary">保存</button>
                 <button id="cancelAddGroup" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="confirmDeleteModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="close-btn" id="closeConfirmDeleteModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-message">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="margin-bottom: 16px;">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                    <p>确定要删除这个书签吗？</p>
+                    <p class="bookmark-info" id="deleteBookmarkInfo" style="margin-top: 8px; color: var(--text-muted); font-size: 14px;"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirmDelete" class="btn-danger">确认删除</button>
+                <button id="cancelDelete" class="btn-secondary">取消</button>
             </div>
         </div>
     </div>
